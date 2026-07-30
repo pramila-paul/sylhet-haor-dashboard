@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sylhet Haor Water Dashboard</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    font-family: system-ui, Arial, sans-serif;
+    color: #1c2733;
+    background: #f4f6f8;
+  }
+  header {
+    padding: 18px 24px;
+    background: #14324f;
+    color: #fff;
+  }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 4px 0 0; font-size: 13px; color: #b9cbdc; }
+
+  .wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px;
+  }
+  #map {
+    flex: 1 1 460px;
+    height: 560px;
+    border-radius: 8px;
+  }
+  .panel {
+    flex: 1 1 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .haor-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  .haor-buttons button {
+    padding: 8px 12px;
+    border: 1px solid #cbd6e0;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .haor-buttons button.active {
+    background: #14324f;
+    color: #fff;
+    border-color: #14324f;
+  }
+
+  .cards { display: flex; flex-wrap: wrap; gap: 10px; }
+  .card {
+    flex: 1 1 100px;
+    background: #fff;
+    border: 1px solid #e2e8ee;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .card .label { font-size: 11px; color: #6b7a89; text-transform: uppercase; letter-spacing: .04em; }
+  .card .value { font-size: 20px; font-weight: 600; margin-top: 4px; }
+
+  .chart-box {
+    background: #fff;
+    border: 1px solid #e2e8ee;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .chart-box h3 { margin: 0 0 8px; font-size: 14px; }
+  .note { font-size: 12px; color: #6b7a89; }
+  footer { padding: 12px 24px; font-size: 12px; color: #6b7a89; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sylhet Haor Water Dashboard</h1>
+  <p>Permanent vs seasonal water in four haors of greater Sylhet, from JRC Global Surface Water.</p>
+</header>
+
+<div class="wrap">
+  <div id="map"></div>
+
+  <div class="panel">
+    <div class="haor-buttons" id="buttons"></div>
+
+    <div class="cards">
+      <div class="card"><div class="label">Total water</div><div class="value" id="v-total">-</div></div>
+      <div class="card"><div class="label">Permanent</div><div class="value" id="v-perm">-</div></div>
+      <div class="card"><div class="label">Seasonal</div><div class="value" id="v-seas">-</div></div>
+      <div class="card"><div class="label">Permanent share</div><div class="value" id="v-share">-</div></div>
+    </div>
+
+    <div class="chart-box">
+      <h3 id="chart-title">Water area over time</h3>
+      <canvas id="chart" height="200"></canvas>
+      <p class="note" id="chart-note"></p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Boundaries delineated from JRC water occurrence (approximate). The dip in the late 1990s
+  reflects sparse Landsat coverage, not a real dry-down. Built by Pramila Paul.
+</footer>
+
+<script>
+// ---- per-haor summary (from the JRC seasonality analysis) ----
+var haors = {
+  "Tanguar Haor":  {lat: 25.140, lon: 91.088, permanent: 9.7,  seasonal: 123.2, total: 132.9, share: 7.3},
+  "Hakaluki Haor": {lat: 24.677, lon: 92.047, permanent: 15.8, seasonal: 101.8, total: 117.7, share: 13.5},
+  "Dekhar Haor":   {lat: 24.980, lon: 91.453, permanent: 0.1,  seasonal: 25.8,  total: 25.8,  share: 0.2},
+  "Hail Haor":     {lat: 24.378, lon: 91.671, permanent: 0.0,  seasonal: 17.7,  total: 17.7,  share: 0.0}
+};
+
+// ---- yearly time series ----
+// Paste the output of the export cell (from your notebook) between the braces below.
+// Format: { "Tanguar Haor": [ {year:1990, permanent:16.5, seasonal:116.8}, ... ], ... }
+var timeseries = {"Tanguar Haor": [{"year": 2000, "permanent": 16.37, "seasonal": 116.85}, {"year": 2001, "permanent": 16.32, "seasonal": 116.89}, {"year": 2002, "permanent": 16.35, "seasonal": 116.87}, {"year": 2003, "permanent": 14.56, "seasonal": 118.34}, {"year": 2004, "permanent": 16.33, "seasonal": 116.89}, {"year": 2005, "permanent": 15.96, "seasonal": 117.2}, {"year": 2006, "permanent": 14.78, "seasonal": 118.43}, {"year": 2007, "permanent": 16.28, "seasonal": 116.93}, {"year": 2008, "permanent": 16.28, "seasonal": 116.93}, {"year": 2009, "permanent": 16.0, "seasonal": 117.21}, {"year": 2010, "permanent": 16.21, "seasonal": 117.0}, {"year": 2011, "permanent": 16.29, "seasonal": 116.93}, {"year": 2012, "permanent": 15.09, "seasonal": 118.1}, {"year": 2013, "permanent": 15.52, "seasonal": 117.7}, {"year": 2014, "permanent": 15.25, "seasonal": 117.97}, {"year": 2015, "permanent": 16.65, "seasonal": 116.57}, {"year": 2016, "permanent": 16.64, "seasonal": 116.57}, {"year": 2017, "permanent": 17.01, "seasonal": 116.21}, {"year": 2018, "permanent": 17.11, "seasonal": 116.11}, {"year": 2019, "permanent": 12.81, "seasonal": 120.4}, {"year": 2020, "permanent": 13.54, "seasonal": 119.67}], "Hakaluki Haor": [{"year": 2000, "permanent": 22.92, "seasonal": 108.43}, {"year": 2001, "permanent": 22.17, "seasonal": 109.18}, {"year": 2002, "permanent": 21.86, "seasonal": 109.42}, {"year": 2003, "permanent": 21.67, "seasonal": 70.42}, {"year": 2004, "permanent": 22.78, "seasonal": 108.57}, {"year": 2005, "permanent": 23.25, "seasonal": 108.1}, {"year": 2006, "permanent": 19.89, "seasonal": 111.46}, {"year": 2007, "permanent": 20.82, "seasonal": 110.53}, {"year": 2008, "permanent": 22.17, "seasonal": 108.66}, {"year": 2009, "permanent": 21.83, "seasonal": 108.08}, {"year": 2010, "permanent": 22.26, "seasonal": 109.01}, {"year": 2011, "permanent": 21.46, "seasonal": 109.1}, {"year": 2012, "permanent": 21.82, "seasonal": 107.58}, {"year": 2013, "permanent": 18.62, "seasonal": 105.48}, {"year": 2014, "permanent": 21.04, "seasonal": 109.38}, {"year": 2015, "permanent": 22.24, "seasonal": 108.71}, {"year": 2016, "permanent": 23.42, "seasonal": 107.93}, {"year": 2017, "permanent": 23.43, "seasonal": 107.92}, {"year": 2018, "permanent": 23.19, "seasonal": 108.16}, {"year": 2019, "permanent": 23.54, "seasonal": 106.68}, {"year": 2020, "permanent": 22.72, "seasonal": 104.18}], "Dekhar Haor": [{"year": 2000, "permanent": 0.19, "seasonal": 27.09}, {"year": 2001, "permanent": 0.18, "seasonal": 27.1}, {"year": 2002, "permanent": 0.19, "seasonal": 27.09}, {"year": 2003, "permanent": 0.17, "seasonal": 25.68}, {"year": 2004, "permanent": 0.19, "seasonal": 27.09}, {"year": 2005, "permanent": 0.19, "seasonal": 27.06}, {"year": 2006, "permanent": 0.13, "seasonal": 27.16}, {"year": 2007, "permanent": 0.19, "seasonal": 27.08}, {"year": 2008, "permanent": 0.19, "seasonal": 27.07}, {"year": 2009, "permanent": 0.16, "seasonal": 27.11}, {"year": 2010, "permanent": 0.19, "seasonal": 27.09}, {"year": 2011, "permanent": 0.18, "seasonal": 27.04}, {"year": 2012, "permanent": 0.18, "seasonal": 27.04}, {"year": 2013, "permanent": 0.21, "seasonal": 27.07}, {"year": 2014, "permanent": 0.19, "seasonal": 27.06}, {"year": 2015, "permanent": 0.26, "seasonal": 27.02}, {"year": 2016, "permanent": 0.26, "seasonal": 27.0}, {"year": 2017, "permanent": 0.33, "seasonal": 26.96}, {"year": 2018, "permanent": 0.21, "seasonal": 27.07}, {"year": 2019, "permanent": 0.07, "seasonal": 27.2}, {"year": 2020, "permanent": 0.18, "seasonal": 27.11}], "Hail Haor": [{"year": 2000, "permanent": 0.01, "seasonal": 22.53}, {"year": 2001, "permanent": 0.01, "seasonal": 15.74}, {"year": 2002, "permanent": 0.0, "seasonal": 20.96}, {"year": 2003, "permanent": 0.02, "seasonal": 15.0}, {"year": 2004, "permanent": 0.02, "seasonal": 22.52}, {"year": 2005, "permanent": 0.0, "seasonal": 18.45}, {"year": 2006, "permanent": 0.0, "seasonal": 14.96}, {"year": 2007, "permanent": 0.01, "seasonal": 22.51}, {"year": 2008, "permanent": 0.0, "seasonal": 13.21}, {"year": 2009, "permanent": 0.0, "seasonal": 22.54}, {"year": 2010, "permanent": 0.01, "seasonal": 17.73}, {"year": 2011, "permanent": 0.0, "seasonal": 21.82}, {"year": 2012, "permanent": 0.01, "seasonal": 7.34}, {"year": 2013, "permanent": 0.02, "seasonal": 20.92}, {"year": 2014, "permanent": 0.0, "seasonal": 16.0}, {"year": 2015, "permanent": 0.01, "seasonal": 22.19}, {"year": 2016, "permanent": 0.0, "seasonal": 22.25}, {"year": 2017, "permanent": 0.0, "seasonal": 22.54}, {"year": 2018, "permanent": 0.01, "seasonal": 22.27}, {"year": 2019, "permanent": 0.0, "seasonal": 22.02}, {"year": 2020, "permanent": 0.0, "seasonal": 16.04}]};
+
+// ---- map ----
+var map = L.map('map').setView([24.9, 91.5], 8);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+var markers = {};
+Object.keys(haors).forEach(function(name) {
+  var h = haors[name];
+  var m = L.marker([h.lat, h.lon]).addTo(map).bindPopup(name);
+  m.on('click', function() { select(name); });
+  markers[name] = m;
+});
+
+// ---- buttons ----
+var buttonBox = document.getElementById('buttons');
+Object.keys(haors).forEach(function(name) {
+  var b = document.createElement('button');
+  b.textContent = name;
+  b.onclick = function() { select(name); };
+  b.id = 'btn-' + name;
+  buttonBox.appendChild(b);
+});
+
+// ---- chart ----
+var chart = new Chart(document.getElementById('chart'), {
+  type: 'line',
+  data: { labels: [], datasets: [] },
+  options: {
+    responsive: true,
+    scales: { y: { title: { display: true, text: 'Area (km2)' } } }
+  }
+});
+
+function select(name) {
+  var h = haors[name];
+
+  document.getElementById('v-total').textContent = h.total + ' km2';
+  document.getElementById('v-perm').textContent = h.permanent + ' km2';
+  document.getElementById('v-seas').textContent = h.seasonal + ' km2';
+  document.getElementById('v-share').textContent = h.share + ' %';
+  document.getElementById('chart-title').textContent = name + ' - water area, 2000-2020';
+
+  Object.keys(haors).forEach(function(n) {
+    document.getElementById('btn-' + n).classList.toggle('active', n === name);
+  });
+
+  map.setView([h.lat, h.lon], 11);
+  markers[name].openPopup();
+
+  var series = timeseries[name];
+  if (series && series.length) {
+    chart.data.labels = series.map(function(d) { return d.year; });
+    chart.data.datasets = [
+      { label: 'Permanent', data: series.map(function(d) { return d.permanent; }),
+        borderColor: '#0b3d91', backgroundColor: '#0b3d91', tension: .2, spanGaps: false },
+      { label: 'Seasonal', data: series.map(function(d) { return d.seasonal; }),
+        borderColor: '#4aa3df', backgroundColor: '#4aa3df', tension: .2, spanGaps: false }
+    ];
+    document.getElementById('chart-note').textContent = '';
+  } else {
+    chart.data.labels = [];
+    chart.data.datasets = [];
+    document.getElementById('chart-note').textContent =
+      'Time series not loaded yet - paste the exported data into the timeseries variable.';
+  }
+  chart.update();
+}
+
+// start on the first haor
+select(Object.keys(haors)[0]);
+</script>
+</body>
+</html>
