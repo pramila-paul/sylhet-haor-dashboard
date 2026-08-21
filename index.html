@@ -136,7 +136,7 @@
 </div>
 
 <footer>
-  Water area is computed within each haor's bounding box (yellow outline), not just its
+  Water area is computed within each haor's bounding box (blue outline), not just its
   digitized wetland outline, so the surrounding seasonally-flooded plain is included.
   The dip in the late 1990s reflects sparse Landsat coverage, not a real dry-down.
   Built by Pramila Paul.
@@ -152,17 +152,9 @@ var haors = {
 };
 
 // ---- haor bounding boxes (south/west/north/east, in degrees) ----
-// Run the "Export each haor's bounding box" cell in the notebook and paste its
-// printed output here. Used to draw the box outline, place the occurrence image
-// below, and fit the map to the selected haor.
-// Format: { "Tanguar Haor": {south: .., west: .., north: .., east: ..}, ... }
 var haorBBoxes = {};
 
 // ---- water occurrence image per haor, clipped to its bounding box ----
-// Run the "Download a water-occurrence PNG per haor" cell in the notebook, then
-// place the occurrence_thumbs/ folder next to this HTML file. The paths below
-// already match what that cell writes, so no edits are needed if you keep the
-// folder name - only update them if you move or rename the files.
 var haorOccurrenceImages = {
   "Tanguar Haor":  "occurrence_thumbs/Tanguar_Haor.png",
   "Hakaluki Haor": "occurrence_thumbs/Hakaluki_Haor.png",
@@ -171,14 +163,12 @@ var haorOccurrenceImages = {
 };
 
 // ---- yearly time series ----
-// Paste the output of the export cell (from your notebook) between the braces below.
-// Format: { "Tanguar Haor": [ {year:1990, permanent:16.5, seasonal:116.8}, ... ], ... }
 var timeseries = {"Tanguar Haor": [{"year": 2000, "permanent": 16.37, "seasonal": 116.85}, {"year": 2001, "permanent": 16.32, "seasonal": 116.89}, {"year": 2002, "permanent": 16.35, "seasonal": 116.87}, {"year": 2003, "permanent": 14.56, "seasonal": 118.34}, {"year": 2004, "permanent": 16.33, "seasonal": 116.89}, {"year": 2005, "permanent": 15.96, "seasonal": 117.2}, {"year": 2006, "permanent": 14.78, "seasonal": 118.43}, {"year": 2007, "permanent": 16.28, "seasonal": 116.93}, {"year": 2008, "permanent": 16.28, "seasonal": 116.93}, {"year": 2009, "permanent": 16.0, "seasonal": 117.21}, {"year": 2010, "permanent": 16.21, "seasonal": 117.0}, {"year": 2011, "permanent": 16.29, "seasonal": 116.93}, {"year": 2012, "permanent": 15.09, "seasonal": 118.1}, {"year": 2013, "permanent": 15.52, "seasonal": 117.7}, {"year": 2014, "permanent": 15.25, "seasonal": 117.97}, {"year": 2015, "permanent": 16.65, "seasonal": 116.57}, {"year": 2016, "permanent": 16.64, "seasonal": 116.57}, {"year": 2017, "permanent": 17.01, "seasonal": 116.21}, {"year": 2018, "permanent": 17.11, "seasonal": 116.11}, {"year": 2019, "permanent": 12.81, "seasonal": 120.4}, {"year": 2020, "permanent": 13.54, "seasonal": 119.67}], "Hakaluki Haor": [{"year": 2000, "permanent": 22.92, "seasonal": 108.43}, {"year": 2001, "permanent": 22.17, "seasonal": 109.18}, {"year": 2002, "permanent": 21.86, "seasonal": 109.42}, {"year": 2003, "permanent": 21.67, "seasonal": 70.42}, {"year": 2004, "permanent": 22.78, "seasonal": 108.57}, {"year": 2005, "permanent": 23.25, "seasonal": 108.1}, {"year": 2006, "permanent": 19.89, "seasonal": 111.46}, {"year": 2007, "permanent": 20.82, "seasonal": 110.53}, {"year": 2008, "permanent": 22.17, "seasonal": 108.66}, {"year": 2009, "permanent": 21.83, "seasonal": 108.08}, {"year": 2010, "permanent": 22.26, "seasonal": 109.01}, {"year": 2011, "permanent": 21.46, "seasonal": 109.1}, {"year": 2012, "permanent": 21.82, "seasonal": 107.58}, {"year": 2013, "permanent": 18.62, "seasonal": 105.48}, {"year": 2014, "permanent": 21.04, "seasonal": 109.38}, {"year": 2015, "permanent": 22.24, "seasonal": 108.71}, {"year": 2016, "permanent": 23.42, "seasonal": 107.93}, {"year": 2017, "permanent": 23.43, "seasonal": 107.92}, {"year": 2018, "permanent": 23.19, "seasonal": 108.16}, {"year": 2019, "permanent": 23.54, "seasonal": 106.68}, {"year": 2020, "permanent": 22.72, "seasonal": 104.18}], "Dekhar Haor": [{"year": 2000, "permanent": 0.19, "seasonal": 27.09}, {"year": 2001, "permanent": 0.18, "seasonal": 27.1}, {"year": 2002, "permanent": 0.19, "seasonal": 27.09}, {"year": 2003, "permanent": 0.17, "seasonal": 25.68}, {"year": 2004, "permanent": 0.19, "seasonal": 27.09}, {"year": 2005, "permanent": 0.19, "seasonal": 27.06}, {"year": 2006, "permanent": 0.13, "seasonal": 27.16}, {"year": 2007, "permanent": 0.19, "seasonal": 27.08}, {"year": 2008, "permanent": 0.19, "seasonal": 27.07}, {"year": 2009, "permanent": 0.16, "seasonal": 27.11}, {"year": 2010, "permanent": 0.19, "seasonal": 27.09}, {"year": 2011, "permanent": 0.18, "seasonal": 27.04}, {"year": 2012, "permanent": 0.18, "seasonal": 27.04}, {"year": 2013, "permanent": 0.21, "seasonal": 27.07}, {"year": 2014, "permanent": 0.19, "seasonal": 27.06}, {"year": 2015, "permanent": 0.26, "seasonal": 27.02}, {"year": 2016, "permanent": 0.26, "seasonal": 27.0}, {"year": 2017, "permanent": 0.33, "seasonal": 26.96}, {"year": 2018, "permanent": 0.21, "seasonal": 27.07}, {"year": 2019, "permanent": 0.07, "seasonal": 27.2}, {"year": 2020, "permanent": 0.18, "seasonal": 27.11}], "Hail Haor": [{"year": 2000, "permanent": 0.01, "seasonal": 22.53}, {"year": 2001, "permanent": 0.01, "seasonal": 15.74}, {"year": 2002, "permanent": 0.0, "seasonal": 20.96}, {"year": 2003, "permanent": 0.02, "seasonal": 15.0}, {"year": 2004, "permanent": 0.02, "seasonal": 22.52}, {"year": 2005, "permanent": 0.0, "seasonal": 18.45}, {"year": 2006, "permanent": 0.0, "seasonal": 14.96}, {"year": 2007, "permanent": 0.01, "seasonal": 22.51}, {"year": 2008, "permanent": 0.0, "seasonal": 13.21}, {"year": 2009, "permanent": 0.0, "seasonal": 22.54}, {"year": 2010, "permanent": 0.01, "seasonal": 17.73}, {"year": 2011, "permanent": 0.0, "seasonal": 21.82}, {"year": 2012, "permanent": 0.01, "seasonal": 7.34}, {"year": 2013, "permanent": 0.02, "seasonal": 20.92}, {"year": 2014, "permanent": 0.0, "seasonal": 16.0}, {"year": 2015, "permanent": 0.01, "seasonal": 22.19}, {"year": 2016, "permanent": 0.0, "seasonal": 22.25}, {"year": 2017, "permanent": 0.0, "seasonal": 22.54}, {"year": 2018, "permanent": 0.01, "seasonal": 22.27}, {"year": 2019, "permanent": 0.0, "seasonal": 22.02}, {"year": 2020, "permanent": 0.0, "seasonal": 16.04}]};
 
 // ---- map ----
 var map = L.map('map').setView([24.9, 91.5], 8);
 
-// Google Satellite basemap (replaces OpenStreetMap).
+// Google Satellite basemap
 L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
   maxZoom: 20,
   subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -230,7 +220,6 @@ function showBoundary(name, h) {
 
   var box = haorBBoxes[name];
   if (!box) {
-    // No bounding box loaded yet - fall back to centering on the marker.
     map.setView([h.lat, h.lon], 11);
     return;
   }
@@ -243,7 +232,7 @@ function showBoundary(name, h) {
   }
 
   boundaryLayer = L.rectangle(bounds, {
-    color: '#ffcc00', weight: 3, fill: false
+    color: '#0078ff', weight: 3, fill: false
   }).addTo(map);
 
   map.fitBounds(bounds, { padding: [24, 24] });
@@ -287,12 +276,10 @@ function select(name) {
   chart.update();
 }
 
-// re-render the current haor's overlay when the toggle is flipped
 occurrenceToggle.addEventListener('change', function() {
   showBoundary(currentHaor, haors[currentHaor]);
 });
 
-// start on the first haor
 select(Object.keys(haors)[0]);
 </script>
 </body>
