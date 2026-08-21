@@ -1,4 +1,4 @@
-# Sylhet Haor Water Dashboard
+# Sylhet Haor Wetland Dashboard
 
 An interactive dashboard showing permanent and seasonal water in four haors (seasonal
 wetlands) of greater Sylhet, Bangladesh. Select a haor to see its water area, the split
